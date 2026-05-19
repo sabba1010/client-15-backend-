@@ -29,7 +29,7 @@ curl -s -X POST http://localhost:5000/api/users/login \
 # Login as admin — copy the token from the response
 curl -s -X POST http://localhost:5000/api/users/login \
   -H "Content-Type: application/json" \
-  -d "{\"email\":\"admin@mylocalpro.com.au\",\"password\":\"admin1234\"}"
+  -d "{\"email\":\"super@admin.com\",\"password\":\"password.admin.123\"}"
 
 
 # ============================================================
@@ -70,11 +70,11 @@ curl -s "http://localhost:5000/api/businesses?location=Hobart"
 curl -s "http://localhost:5000/api/businesses?search=emergency"
 
 # Get single listing by ID
-curl -s http://localhost:5000/api/businesses/$BUSINESS_ID
+curl -s http://localhost:5000/api/businesses/6a0bfe381b82a57303a2b6f8
 
 # Get my own listings (tradie)
 curl -s http://localhost:5000/api/businesses/my/listings \
-  -H "Authorization: Bearer $TRADIE_TOKEN"
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGJmYmIxZjI5YTU4ZDNmZDYxNzBhMiIsImlhdCI6MTc3OTE3ODY5MSwiZXhwIjoxNzgxNzcwNjkxfQ.ZLTDRNoHYJsnKrhsraupoOqq-4xC5Xh3TzRE4anBEfQ"
 
 
 # ============================================================
@@ -82,7 +82,7 @@ curl -s http://localhost:5000/api/businesses/my/listings \
 # ============================================================
 
 curl -s -X PUT http://localhost:5000/api/businesses/6a0bfe381b82a57303a2b6f8 \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGJmYmIxZjI5YTU4ZDNmZDYxNzBhMiIsImlhdCI6MTc3OTE3MDgzOSwiZXhwIjoxNzgxNzYyODM5fQ.m5Xxv3YsnEfqpQ079zg9RJaUXPAVzprHIhvIdw6Ohi4" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGJmYmIxZjI5YTU4ZDNmZDYxNzBhMiIsImlhdCI6MTc3OTE3ODY5MSwiZXhwIjoxNzgxNzcwNjkxfQ.ZLTDRNoHYJsnKrhsraupoOqq-4xC5Xh3TzRE4anBEfQ" \
   -H "Content-Type: application/json" \
   -d "{\"shortDescription\":\"Updated description.\",\"yearsInBusiness\":\"12\"}"
 
@@ -111,7 +111,7 @@ curl -s -X DELETE http://localhost:5000/api/businesses/$BUSINESS_ID/gallery/$IMA
 
 # Get all listings (any status)
 curl -s http://localhost:5000/api/businesses/admin/all \
-  -H "Authorization: Bearer $ADMIN_TOKEN"
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGMwMWU1MWI4MmE1NzMwM2EyYjZmOSIsImlhdCI6MTc3OTE3ODk1MSwiZXhwIjoxNzgxNzcwOTUxfQ.Umk-DFGasZzhmiBY2F18-kojePk_lX0BGoDPnByis74"
 
 # Get pending listings only
 curl -s "http://localhost:5000/api/businesses/admin/all?status=pending" \
@@ -126,8 +126,8 @@ curl -s "http://localhost:5000/api/businesses/admin/all?status=rejected" \
   -H "Authorization: Bearer $ADMIN_TOKEN"
 
 # Approve a listing
-curl -s -X PATCH http://localhost:5000/api/businesses/$BUSINESS_ID/status \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
+curl -s -X PATCH http://localhost:5000/api/businesses/6a0bfe381b82a57303a2b6f8/status \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGMwMWU1MWI4MmE1NzMwM2EyYjZmOSIsImlhdCI6MTc3OTE3ODUxMiwiZXhwIjoxNzgxNzcwNTEyfQ.IoPRXn9rHhu-V0W6f8Wxfl52s1dUvly8XvwcmtEZH00" \
   -H "Content-Type: application/json" \
   -d "{\"status\":\"approved\"}"
 

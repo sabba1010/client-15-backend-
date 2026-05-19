@@ -16,8 +16,10 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Serve uploaded images statically
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded images statically (only for local development)
+if (process.env.NODE_ENV !== 'production') {
+    app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+}
 
 // Routes
 const userRoutes = require('./routes/user');

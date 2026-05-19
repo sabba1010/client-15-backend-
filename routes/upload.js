@@ -5,10 +5,16 @@ const fs = require('fs');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-// Ensure the uploads directory exists
+// Ensure the uploads directory exists (only for local development)
 const uploadDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+    } catch (error) {
+        console.warn('Warning: Could not create uploads directory:', error.message);
+    }
 }
 
 // @route   POST /api/upload/image

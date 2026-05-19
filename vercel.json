@@ -1,0 +1,6 @@
+{
+  "buildCommand": "echo 'Build complete'",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

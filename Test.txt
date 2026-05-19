@@ -1,0 +1,186 @@
+# ============================================================
+# CURL TESTS — Business, Stats, Upload
+# HOW TO USE:
+#   1. Run the login commands first
+#   2. Copy the token value and paste it into the TOKEN= lines
+#   3. Copy-paste each command into Git Bash one at a time
+# ============================================================
+
+
+# ============================================================
+# STEP 1 — REGISTER & LOGIN
+# ============================================================
+
+# Register tradie
+curl -s -X POST http://localhost:5000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"Test Tradie\",\"email\":\"tradie@test.com\",\"password\":\"password123\",\"role\":\"tradie\"}"
+
+# Register regular user
+curl -s -X POST http://localhost:5000/api/users/register \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"S. Admin\",\"email\":\"super@admin.com\",\"password\":\"password.admin.123\",\"role\":\"user\"}"
+
+# Login as tradie — copy the token from the response
+curl -s -X POST http://localhost:5000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"tradie@test.com\",\"password\":\"password123\"}"
+
+# Login as admin — copy the token from the response
+curl -s -X POST http://localhost:5000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"admin@mylocalpro.com.au\",\"password\":\"admin1234\"}"
+
+
+# ============================================================
+# STEP 2 — SET YOUR TOKENS (paste token value, no $ prefix)
+# ============================================================
+
+TRADIE_TOKEN="paste_tradie_token_here"
+ADMIN_TOKEN="paste_admin_token_here"
+
+
+# ============================================================
+# BUSINESS — CREATE
+# ============================================================
+
+curl -s -X POST http://localhost:5000/api/businesses \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGJmYmIxZjI5YTU4ZDNmZDYxNzBhMiIsImlhdCI6MTc3OTE3MDgzOSwiZXhwIjoxNzgxNzYyODM5fQ.m5Xxv3YsnEfqpQ079zg9RJaUXPAVzprHIhvIdw6Ohi4" \
+  -H "Content-Type: application/json" \
+  -d "{\"businessName\":\"JD Plumbing\",\"category\":\"Plumber\",\"location\":\"Hobart Region (TAS)\",\"suburb\":\"Sandy Bay\",\"servicesOffered\":\"Emergency repairs, Hot water\",\"contactPhone\":\"0412345678\",\"contactEmail\":\"john@jd.com\",\"shortDescription\":\"Reliable plumbing across Hobart.\",\"yearsInBusiness\":\"10\"}"
+
+# After running above, copy the _id from the response and set it here:
+BUSINESS_ID="6a0bfe381b82a57303a2b6f8"
+
+
+# ============================================================
+# BUSINESS — READ (public, no token needed)
+# ============================================================
+
+# Get all approved listings
+curl -s http://localhost:5000/api/businesses
+
+# Filter by category
+curl -s "http://localhost:5000/api/businesses?category=Plumber"
+
+# Filter by location
+curl -s "http://localhost:5000/api/businesses?location=Hobart"
+
+# Search by keyword
+curl -s "http://localhost:5000/api/businesses?search=emergency"
+
+# Get single listing by ID
+curl -s http://localhost:5000/api/businesses/$BUSINESS_ID
+
+# Get my own listings (tradie)
+curl -s http://localhost:5000/api/businesses/my/listings \
+  -H "Authorization: Bearer $TRADIE_TOKEN"
+
+
+# ============================================================
+# BUSINESS — UPDATE (tradie)
+# ============================================================
+
+curl -s -X PUT http://localhost:5000/api/businesses/6a0bfe381b82a57303a2b6f8 \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMGJmYmIxZjI5YTU4ZDNmZDYxNzBhMiIsImlhdCI6MTc3OTE3MDgzOSwiZXhwIjoxNzgxNzYyODM5fQ.m5Xxv3YsnEfqpQ079zg9RJaUXPAVzprHIhvIdw6Ohi4" \
+  -H "Content-Type: application/json" \
+  -d "{\"shortDescription\":\"Updated description.\",\"yearsInBusiness\":\"12\"}"
+
+
+# ============================================================
+# BUSINESS — GALLERY
+# ============================================================
+
+# Add image to gallery
+curl -s -X POST http://localhost:5000/api/businesses/$BUSINESS_ID/gallery \
+  -H "Authorization: Bearer $TRADIE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"url\":\"https://images.unsplash.com/photo-1504328345606?w=800\",\"title\":\"Bathroom job\"}"
+
+# After running above, copy the _id of the image from the gallery array:
+IMAGE_ID="paste_image_id_here"
+
+# Remove image from gallery
+curl -s -X DELETE http://localhost:5000/api/businesses/$BUSINESS_ID/gallery/$IMAGE_ID \
+  -H "Authorization: Bearer $TRADIE_TOKEN"
+
+
+# ============================================================
+# BUSINESS — ADMIN ACTIONS
+# ============================================================
+
+# Get all listings (any status)
+curl -s http://localhost:5000/api/businesses/admin/all \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Get pending listings only
+curl -s "http://localhost:5000/api/businesses/admin/all?status=pending" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Get approved listings only
+curl -s "http://localhost:5000/api/businesses/admin/all?status=approved" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Get rejected listings only
+curl -s "http://localhost:5000/api/businesses/admin/all?status=rejected" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Approve a listing
+curl -s -X PATCH http://localhost:5000/api/businesses/$BUSINESS_ID/status \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"approved\"}"
+
+# Reject a listing
+curl -s -X PATCH http://localhost:5000/api/businesses/$BUSINESS_ID/status \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"rejected\"}"
+
+# Set back to pending
+curl -s -X PATCH http://localhost:5000/api/businesses/$BUSINESS_ID/status \
+  -H "Authorization: Bearer $ADMIN_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"status\":\"pending\"}"
+
+
+# ============================================================
+# BUSINESS — DELETE
+# ============================================================
+
+# Delete listing (tradie — own listing)
+curl -s -X DELETE http://localhost:5000/api/businesses/$BUSINESS_ID \
+  -H "Authorization: Bearer $TRADIE_TOKEN"
+
+# Delete listing (admin — any listing)
+curl -s -X DELETE http://localhost:5000/api/businesses/$BUSINESS_ID \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+
+# ============================================================
+# STATS
+# ============================================================
+
+# Admin overview stats (users, listings, blogs, chart data)
+curl -s http://localhost:5000/api/stats/admin \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
+
+# Tradie own stats (total, approved, pending, rejected count)
+curl -s http://localhost:5000/api/stats/tradie \
+  -H "Authorization: Bearer $TRADIE_TOKEN"
+
+
+# ============================================================
+# UPLOAD
+# ============================================================
+
+# Upload single image — change the file path to a real image on your machine
+curl -s -X POST http://localhost:5000/api/upload/image \
+  -H "Authorization: Bearer $TRADIE_TOKEN" \
+  -F "image=@C:/Users/YourName/Pictures/test.jpg"
+
+# Upload multiple images
+curl -s -X POST http://localhost:5000/api/upload/images \
+  -H "Authorization: Bearer $TRADIE_TOKEN" \
+  -F "images=@C:/Users/YourName/Pictures/photo1.jpg" \
+  -F "images=@C:/Users/YourName/Pictures/photo2.jpg"

@@ -12,10 +12,18 @@ const categorySchema = new mongoose.Schema({
         required: true,
         unique: true,
         trim: true,
-        lowercase: true,
     }
 }, {
     timestamps: true,
+});
+
+categorySchema.pre('save', function () {
+    if (this.slug) {
+        this.slug = this.slug
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '-');
+    }
 });
 
 const Category = mongoose.model('Category', categorySchema);

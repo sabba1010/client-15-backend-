@@ -17,7 +17,14 @@ app.use(cors());
 
 // Routes
 const userRoutes = require('./routes/user');
+const categoryRoutes = require('./routes/category');
+const locationRoutes = require('./routes/location');
+const blogRoutes = require('./routes/blog');
+
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/blogs', blogRoutes);
 
 app.get('/', (req, res) => {
     res.send('API is running...');

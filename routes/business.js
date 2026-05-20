@@ -31,20 +31,27 @@ router.get('/', async (req, res) => {
     }
 });
 
-// @route   GET /api/businesses/:id
-// @desc    Get a single business by ID (public)
-// @access  Public
-router.get('/:id', async (req, res) => {
+// ─── ADMIN ───────────────────────────────────────────────────────────────────
+// MUST come before /:id routes to prevent route shadowing
+
+// @route   GET /api/businesses/admin/all
+// @desc    Get all businesses with any status (for admin dashboard)
+// @access  Private/Admin
+router.get('/admin/all', protect, admin, async (req, res) => {
     try {
-        const business = await Business.findById(req.params.id).populate('owner', 'name email');
-        if (!business) return res.status(404).json({ message: 'Business not found' });
-        res.json(business);
+        const { status } = req.query;
+        const filter = status ? { status } : {};
+        const businesses = await Business.find(filter)
+            .populate('owner', 'name email role')
+            .sort({ createdAt: -1 });
+        res.json(businesses);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
 // ─── TRADIE (own listings) ────────────────────────────────────────────────────
+// MUST come before /:id routes to prevent route shadowing
 
 // @route   GET /api/businesses/my/listings
 // @desc    Get all businesses owned by the logged-in tradie
@@ -89,6 +96,21 @@ router.post('/', protect, tradie, async (req, res) => {
     }
 });
 
+// ─── PARAMETRIZED ROUTES (must come after specific routes) ──────────────────
+
+// @route   GET /api/businesses/:id
+// @desc    Get a single business by ID (public)
+// @access  Public
+router.get('/:id', async (req, res) => {
+    try {
+        const business = await Business.findById(req.params.id).populate('owner', 'name email');
+        if (!business) return res.status(404).json({ message: 'Business not found' });
+        res.json(business);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // @route   PUT /api/businesses/:id
 // @desc    Update a business listing (owner or admin)
 // @access  Private/Tradie
@@ -112,6 +134,29 @@ router.put('/:id', protect, tradie, async (req, res) => {
         );
 
         res.json(updated);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @route   PATCH /api/businesses/:id/status
+// @desc    Approve or reject a business listing
+// @access  Private/Admin
+router.patch('/:id/status', protect, admin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!['pending', 'approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: 'Status must be pending, approved or rejected' });
+        }
+
+        const business = await Business.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        );
+
+        if (!business) return res.status(404).json({ message: 'Business not found' });
+        res.json(business);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -176,47 +221,6 @@ router.delete('/:id/gallery/:imageId', protect, tradie, async (req, res) => {
         );
         await business.save();
         res.json(business.gallery);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// ─── ADMIN ───────────────────────────────────────────────────────────────────
-
-// @route   GET /api/businesses/admin/all
-// @desc    Get all businesses with any status (for admin dashboard)
-// @access  Private/Admin
-router.get('/admin/all', protect, admin, async (req, res) => {
-    try {
-        const { status } = req.query;
-        const filter = status ? { status } : {};
-        const businesses = await Business.find(filter)
-            .populate('owner', 'name email role')
-            .sort({ createdAt: -1 });
-        res.json(businesses);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// @route   PATCH /api/businesses/:id/status
-// @desc    Approve or reject a business listing
-// @access  Private/Admin
-router.patch('/:id/status', protect, admin, async (req, res) => {
-    try {
-        const { status } = req.body;
-        if (!['pending', 'approved', 'rejected'].includes(status)) {
-            return res.status(400).json({ message: 'Status must be pending, approved or rejected' });
-        }
-
-        const business = await Business.findByIdAndUpdate(
-            req.params.id,
-            { status },
-            { new: true }
-        );
-
-        if (!business) return res.status(404).json({ message: 'Business not found' });
-        res.json(business);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

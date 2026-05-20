@@ -1,0 +1,80 @@
+# MyLocalPro API Testing Commands
+
+Below are curl commands to test the newly updated APIs.
+Replace `{{TOKEN}}` with an actual JWT token obtained from logging in, and `{{BUSINESS_ID}}` with an actual Business ID.
+
+## User Authentication
+
+1. Register a new user
+curl -X POST http://localhost:5000/api/users/register \
+-H "Content-Type: application/json" \
+-d '{"firstName": "John", "lastName": "Doe", "email": "johndoe@example.com", "password": "password123", "role": "user"}'
+
+2. Register a new tradie
+curl -X POST http://localhost:5000/api/users/register \
+-H "Content-Type: application/json" \
+-d '{"firstName": "Bob", "lastName": "Builder", "email": "bob@example.com", "password": "password123", "role": "tradie"}'
+
+3. Register a new admin
+curl -X POST http://localhost:5000/api/users/register \
+-H "Content-Type: application/json" \
+-d '{"firstName": "Admin", "lastName": "User", "email": "admin@example.com", "password": "password123", "role": "admin"}'
+
+4. Login
+curl -X POST http://localhost:5000/api/users/login \
+-H "Content-Type: application/json" \
+-d '{"email": "johndoe@example.com", "password": "password123"}'
+
+## User Profile Management
+
+5. Get Profile
+curl -X GET http://localhost:5000/api/users/profile \
+-H "Authorization: Bearer {{TOKEN}}"
+
+6. Update Profile
+curl -X PUT http://localhost:5000/api/users/profile \
+-H "Authorization: Bearer {{TOKEN}}" \
+-H "Content-Type: application/json" \
+-d '{
+  "firstName": "John",
+  "lastName": "Smith",
+  "phone": "0400 123 456",
+  "address": "123 Test St",
+  "city": "Sydney",
+  "state": "NSW",
+  "postcode": "2000"
+}'
+
+7. Update Password
+curl -X PUT http://localhost:5000/api/users/profile/password \
+-H "Authorization: Bearer {{TOKEN}}" \
+-H "Content-Type: application/json" \
+-d '{"currentPassword": "password123", "newPassword": "newpassword123"}'
+
+## User Favorites (Saved Businesses)
+
+8. Save a Business (Favorite)
+curl -X POST http://localhost:5000/api/users/saved/{{BUSINESS_ID}} \
+-H "Authorization: Bearer {{TOKEN}}"
+
+9. Get Saved Businesses
+curl -X GET http://localhost:5000/api/users/saved \
+-H "Authorization: Bearer {{TOKEN}}"
+
+10. Remove Saved Business
+curl -X DELETE http://localhost:5000/api/users/saved/{{BUSINESS_ID}} \
+-H "Authorization: Bearer {{TOKEN}}"
+
+## Dashboards (Stats)
+
+11. Admin Dashboard Stats
+curl -X GET http://localhost:5000/api/stats/admin \
+-H "Authorization: Bearer {{TOKEN}}"
+
+12. Tradie Dashboard Stats
+curl -X GET http://localhost:5000/api/stats/tradie \
+-H "Authorization: Bearer {{TOKEN}}"
+
+13. User Dashboard Stats
+curl -X GET http://localhost:5000/api/stats/user \
+-H "Authorization: Bearer {{TOKEN}}"

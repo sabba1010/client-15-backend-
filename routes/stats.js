@@ -58,6 +58,40 @@ router.get('/admin', protect, admin, async (req, res) => {
             { $sort: { value: -1 } },
         ]);
 
+        // Recent Activity (newest businesses and users)
+        const recentBusinesses = await Business.find({})
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('businessName status createdAt');
+            
+        const recentUsers = await User.find({})
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('firstName lastName role createdAt');
+            
+        const recentActivity = [];
+        
+        recentBusinesses.forEach(b => {
+            recentActivity.push({
+                text: b.status === 'pending' 
+                    ? `New submission: ${b.businessName}` 
+                    : b.status === 'approved' ? `Approved: ${b.businessName}` : `Rejected: ${b.businessName}`,
+                time: b.createdAt,
+                type: b.status === 'pending' ? 'add' : b.status === 'approved' ? 'approve' : 'business',
+            });
+        });
+        
+        recentUsers.forEach(u => {
+            recentActivity.push({
+                text: `New ${u.role}: ${u.firstName} ${u.lastName}`,
+                time: u.createdAt,
+                type: 'user',
+            });
+        });
+
+        // Sort by time descending
+        recentActivity.sort((a, b) => new Date(b.time) - new Date(a.time));
+
         res.json({
             users: {
                 total: totalUsers,
@@ -81,6 +115,7 @@ router.get('/admin', protect, admin, async (req, res) => {
                 categories: categoryBreakdown,
                 locations: locationBreakdown,
             },
+            recentActivity: recentActivity.slice(0, 10), // Top 10 most recent
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -96,14 +131,54 @@ router.get('/tradie', protect, async (req, res) => {
     try {
         const ownerId = req.user._id;
 
-        const [total, approved, pending, rejected] = await Promise.all([
+        const [total, approved, pending, rejected, recentListings] = await Promise.all([
             Business.countDocuments({ owner: ownerId }),
             Business.countDocuments({ owner: ownerId, status: 'approved' }),
             Business.countDocuments({ owner: ownerId, status: 'pending' }),
             Business.countDocuments({ owner: ownerId, status: 'rejected' }),
+            Business.find({ owner: ownerId }).sort({ createdAt: -1 }).limit(3),
         ]);
+        
+        // Calculate Profile Completeness
+        const user = await User.findById(ownerId);
+        let completedFields = 0;
+        const totalFields = 7; // firstName, lastName, phone, address, city, state, postcode
+        if (user.firstName) completedFields++;
+        if (user.lastName) completedFields++;
+        if (user.phone) completedFields++;
+        if (user.address) completedFields++;
+        if (user.city) completedFields++;
+        if (user.state) completedFields++;
+        if (user.postcode) completedFields++;
+        
+        const profileCompleteness = Math.round((completedFields / totalFields) * 100);
 
-        res.json({ total, approved, pending, rejected });
+        res.json({ 
+            total, 
+            approved, 
+            pending, 
+            rejected,
+            profileCompleteness,
+            recentListings
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ─── USER STATS ───────────────────────────────────────────────────────────────
+
+// @route   GET /api/stats/user
+// @desc    Get stats for a normal user (e.g. saved businesses count)
+// @access  Private
+router.get('/user', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate('savedBusinesses', 'businessName category location status');
+        
+        res.json({
+            totalSaved: user.savedBusinesses.length,
+            savedBusinessesPreview: user.savedBusinesses.slice(0, 5), // Provide top 5 for quick preview
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

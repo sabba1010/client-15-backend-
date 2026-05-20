@@ -1,0 +1,61 @@
+# MyLocalPro Server Setup Overview
+
+This document provides a summary of the backend architecture, configurations, and API routes currently implemented in the `client-15-backend-` project.
+
+## 1. Stack and Configuration
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB (Mongoose ODN)
+- **Environment Variables**: Managed via `dotenv` (`.env` file)
+- **CORS**: Enabled globally using `cors` package.
+- **Port**: Defaults to 5000 (or `process.env.PORT`).
+
+## 2. Models (MongoDB Collections)
+- **User**: Stores users, tradies, and admins. Contains fields: `firstName`, `lastName`, `email`, `password`, `role`, contact info (`phone`, `address`, `city`, `state`, `postcode`), and `savedBusinesses`. Uses `bcrypt` to hash passwords.
+- **Business**: Stores business listings created by tradies. Fields include `owner` (ref User), `businessName`, `category`, `location`, description, `status` (pending, approved, rejected), and a `gallery` array.
+- **Category**: Stores predefined service categories.
+- **Location**: Stores predefined regions/cities.
+- **Blog**: Stores blog posts written by admins/writers.
+
+## 3. Middleware
+- **auth.js (`protect`, `admin`)**: Verifies JWT tokens and ensures users are authenticated. The `admin` middleware restricts routes to admin users only.
+- **roles.js (`tradie`, `selfOrAdmin`)**: Further restricts routes. `tradie` ensures only tradies/admins access business management routes.
+- **upload.js**: Uses `multer` and Cloudinary (or local storage fallback) to handle image uploads for galleries and logos.
+
+## 4. API Routes
+The server mounts routes in `server.js` under `/api/`:
+
+- **`/api/users` (Routes: `routes/user.js`)**
+  - `POST /register`: Register user/tradie/admin.
+  - `POST /login`: Authenticate and get JWT.
+  - `GET /profile`: Get logged-in user's profile.
+  - `PUT /profile`: Update profile info (firstName, lastName, contact details).
+  - `PUT /profile/password`: Securely change password.
+  - `GET /saved`: Get user's favorited businesses.
+  - `POST /saved/:businessId`: Favorite a business.
+  - `DELETE /saved/:businessId`: Un-favorite a business.
+  - `GET /`: Get all users (Admin only).
+
+- **`/api/businesses` (Routes: `routes/business.js`)**
+  - `GET /`: Get all approved businesses (Public search/filter).
+  - `GET /:id`: Get single business.
+  - `GET /my/listings`: Get tradie's own businesses.
+  - `POST /`: Create a new business listing (Tradie).
+  - `PUT /:id`: Update business details (Tradie).
+  - `DELETE /:id`: Delete business (Tradie).
+  - `GET /admin/all`: Get all businesses regardless of status (Admin).
+  - `PATCH /:id/status`: Approve or reject listing (Admin).
+
+- **`/api/stats` (Routes: `routes/stats.js`)**
+  - `GET /admin`: Complete platform stats (counts, charts, recent activity feed).
+  - `GET /tradie`: Tradie-specific stats (listing statuses, profile completeness, recent listings).
+  - `GET /user`: Normal user stats (total saved, preview of favorites).
+
+- **`/api/categories` & `/api/locations` & `/api/blogs`**
+  - Standard CRUD operations. Admin protected for POST/PUT/DELETE, Public for GET.
+
+## 5. File Uploads
+- Locally handled in development (served statically via `/uploads`), handled by Cloudinary in production.
+
+## 6. Entry Point
+- **`server.js`**: Initializes database connection, applies middlewares, mounts all route files, and starts listening on the designated PORT.
